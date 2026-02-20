@@ -1,6 +1,7 @@
 package com.genersoft.iot.vmp.gb28181.service.impl;
 
 import com.genersoft.iot.vmp.common.*;
+import com.genersoft.iot.vmp.common.enums.MediaApp;
 import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.conf.SipConfig;
 import com.genersoft.iot.vmp.conf.UserSetting;
@@ -618,7 +619,7 @@ public class PlatformServiceImpl implements IPlatformService, CommandLineRunner 
         } else {
             tcpMode = 0;
         }
-        SSRCInfo ssrcInfo = mediaServerService.openRTPServer(mediaServerItem, streamId, null, ssrcCheck, false, null, true, false, false, tcpMode);
+        SSRCInfo ssrcInfo = mediaServerService.openRTPServer(mediaServerItem, MediaApp.GB28181, streamId, null, ssrcCheck, false, null, true, false, false, tcpMode);
         if (ssrcInfo == null || ssrcInfo.getPort() < 0) {
             log.info("[国标级联] 发起语音喊话 开启端口监听失败， platform: {}, channel： {}", platform.getServerGBId(), channel.getGbDeviceId());
             SipSubscribe.EventResult<Object> eventResult = new SipSubscribe.EventResult<>();
@@ -650,7 +651,7 @@ public class PlatformServiceImpl implements IPlatformService, CommandLineRunner 
                 } finally {
                     timeoutCallback.run(1, "收流超时");
                     mediaServerService.releaseSsrc(mediaServerItem.getId(), ssrcInfo.getSsrc());
-                    mediaServerService.closeRTPServer(mediaServerItem, ssrcInfo.getStream());
+                    mediaServerService.closeRTPServer(mediaServerItem, ssrcInfo.getApp(), ssrcInfo.getStream());
                     sessionManager.removeByStream(ssrcInfo.getApp(), ssrcInfo.getStream());
                 }
             }
@@ -724,7 +725,7 @@ public class PlatformServiceImpl implements IPlatformService, CommandLineRunner 
                     log.info("[Invite 200OK] SSRC修正 {}->{}", ssrcInfo.getSsrc(), ssrcInResponse);
                     // 释放ssrc
                     mediaServerService.releaseSsrc(mediaServerItem.getId(), ssrcInfo.getSsrc());
-                    Boolean result = mediaServerService.updateRtpServerSSRC(mediaServerItem, ssrcInfo.getStream(), ssrcInResponse);
+                    Boolean result = mediaServerService.updateRtpServerSSRC(mediaServerItem, ssrcInfo.getApp(), ssrcInfo.getStream(), ssrcInResponse);
                     if (!result) {
                         try {
                             log.warn("[Invite 200OK] 更新ssrc失败，停止喊话 {}/{}", platform.getServerGBId(), channel.getGbDeviceId());
@@ -826,12 +827,12 @@ public class PlatformServiceImpl implements IPlatformService, CommandLineRunner 
             }
             log.info("[TCP主动连接对方] serverGbId: {}, channelId: {}, 连接对方的地址：{}:{}, SSRC: {}, SSRC校验：{}",
                     platform.getServerGBId(), channel.getGbDeviceId(), sdp.getConnection().getAddress(), port, ssrcInfo.getSsrc(), ssrcCheck);
-            Boolean result = mediaServerService.connectRtpServer(mediaServerItem, sdp.getConnection().getAddress(), port, ssrcInfo.getStream());
+            Boolean result = mediaServerService.connectRtpServer(mediaServerItem, sdp.getConnection().getAddress(), port, ssrcInfo.getApp(), ssrcInfo.getStream());
             log.info("[TCP主动连接对方] 结果： {}", result);
         } catch (SdpException e) {
             log.error("[TCP主动连接对方] serverGbId: {}, channelId: {}, 解析200OK的SDP信息失败", platform.getServerGBId(), channel.getGbDeviceId(), e);
             dynamicTask.stop(timeOutTaskKey);
-            mediaServerService.closeRTPServer(mediaServerItem, ssrcInfo.getStream());
+            mediaServerService.closeRTPServer(mediaServerItem, ssrcInfo.getApp(), ssrcInfo.getStream());
             // 释放ssrc
             mediaServerService.releaseSsrc(mediaServerItem.getId(), ssrcInfo.getSsrc());
 
@@ -855,7 +856,7 @@ public class PlatformServiceImpl implements IPlatformService, CommandLineRunner 
         } catch (InvalidArgumentException | SipException | ParseException | SsrcTransactionNotFoundException e) {
             log.warn("[消息发送失败] 停止语音对讲， 平台：{}，通道：{}", platform.getId(), channel.getGbDeviceId() );
         } finally {
-            mediaServerService.closeRTPServer(mediaServerItem, stream);
+            mediaServerService.closeRTPServer(mediaServerItem, app, stream);
             InviteInfo inviteInfo = inviteStreamService.getInviteInfo(null, channel.getGbId(), stream);
             if (inviteInfo != null) {
                 // 释放ssrc

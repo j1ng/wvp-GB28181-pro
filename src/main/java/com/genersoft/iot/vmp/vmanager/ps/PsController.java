@@ -1,6 +1,7 @@
 package com.genersoft.iot.vmp.vmanager.ps;
 
 import com.genersoft.iot.vmp.common.VideoManagerConstants;
+import com.genersoft.iot.vmp.common.enums.MediaApp;
 import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.conf.exception.ControllerException;
@@ -92,14 +93,14 @@ public class PsController {
             }
         }
         String receiveKey = VideoManagerConstants.WVP_OTHER_RECEIVE_PS_INFO + userSetting.getServerId() + "_" + callId + "_"  + stream;
-        SSRCInfo ssrcInfo = mediaServerService.openRTPServer(mediaServer, stream, ssrcInt + "", false, false, null, false, false, false, tcpMode);
+        SSRCInfo ssrcInfo = mediaServerService.openRTPServer(mediaServer, MediaApp.GB28181, stream, ssrcInt + "", false, false, null, false, false, false, tcpMode);
 
         if (ssrcInfo.getPort() == 0) {
             throw new ControllerException(ErrorCode.ERROR100.getCode(), "获取端口失败");
         }
         // 注册回调如果rtp收流超时则通过回调发送通知
         if (callBack != null) {
-            Hook hook = Hook.getInstance(HookType.on_rtp_server_timeout, "rtp", stream, mediaServer.getId());
+            Hook hook = Hook.getInstance(HookType.on_rtp_server_timeout, MediaApp.GB28181, stream, mediaServer.getId());
             // 订阅 zlm启动事件, 新的zlm也会从这里进入系统
             hookSubscribe.addSubscribe(hook,
                     (hookData)->{
@@ -149,7 +150,7 @@ public class PsController {
     public void closeRtpServer(String stream) {
         log.info("[第三方PS服务对接->关闭收流] stream->{}", stream);
         MediaServer mediaServerItem = mediaServerService.getDefaultMediaServer();
-        mediaServerService.closeRTPServer(mediaServerItem, stream);
+        mediaServerService.closeRTPServer(mediaServerItem, MediaApp.GB28181, stream);
         String receiveKey = VideoManagerConstants.WVP_OTHER_RECEIVE_PS_INFO + userSetting.getServerId() + "_*_"  + stream;
         List<Object> scan = RedisUtil.scan(redisTemplate, receiveKey);
         if (!scan.isEmpty()) {

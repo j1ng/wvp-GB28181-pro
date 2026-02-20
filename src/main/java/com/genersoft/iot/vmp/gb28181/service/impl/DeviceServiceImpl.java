@@ -248,7 +248,7 @@ public class DeviceServiceImpl implements IDeviceService, CommandLineRunner {
         if (ssrcTransactions != null && !ssrcTransactions.isEmpty()) {
             for (SsrcTransaction ssrcTransaction : ssrcTransactions) {
                 mediaServerService.releaseSsrc(ssrcTransaction.getMediaServerId(), ssrcTransaction.getSsrc());
-                mediaServerService.closeRTPServer(ssrcTransaction.getMediaServerId(), ssrcTransaction.getStream());
+                mediaServerService.closeRTPServer(ssrcTransaction.getMediaServerId(), ssrcTransaction.getApp(), ssrcTransaction.getStream());
                 sessionManager.removeByCallId(ssrcTransaction.getCallId());
             }
         }

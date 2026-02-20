@@ -2,6 +2,7 @@ package com.genersoft.iot.vmp.gb28181.transmit.cmd.impl;
 
 import com.alibaba.fastjson2.JSON;
 import com.genersoft.iot.vmp.common.InviteSessionType;
+import com.genersoft.iot.vmp.common.enums.MediaApp;
 import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.conf.exception.SsrcTransactionNotFoundException;
@@ -641,7 +642,7 @@ public class SIPCommanderForPlatform implements ISIPCommanderForPlatform {
         MediaServer mediaServerItem = mediaServerService.getOne(mediaServerId);
         if (mediaServerItem != null) {
             mediaServerService.releaseSsrc(mediaServerItem.getId(), sendRtpItem.getSsrc());
-            mediaServerService.closeRTPServer(mediaServerItem, sendRtpItem.getStream());
+            mediaServerService.closeRTPServer(mediaServerItem, sendRtpItem.getApp(), sendRtpItem.getStream());
         }
         SIPRequest byeRequest = headerProviderPlatformProvider.createByeRequest(platform, sendRtpItem, channel);
         if (byeRequest == null) {
@@ -664,7 +665,7 @@ public class SIPCommanderForPlatform implements ISIPCommanderForPlatform {
         }
 
         mediaServerService.releaseSsrc(ssrcTransaction.getMediaServerId(), ssrcTransaction.getSsrc());
-        mediaServerService.closeRTPServer(ssrcTransaction.getMediaServerId(), ssrcTransaction.getStream());
+        mediaServerService.closeRTPServer(ssrcTransaction.getMediaServerId(), ssrcTransaction.getApp(), ssrcTransaction.getStream());
         sessionManager.removeByStream(ssrcTransaction.getApp(), ssrcTransaction.getStream());
 
         Request byteRequest = headerProviderPlatformProvider.createByteRequest(platform, channel.getGbDeviceId(), ssrcTransaction.getSipTransactionInfo());
@@ -705,7 +706,7 @@ public class SIPCommanderForPlatform implements ISIPCommanderForPlatform {
         }
 
         log.info("{} 分配的ZLM为: {} [{}:{}]", stream, mediaServerItem.getId(), mediaServerItem.getIp(), ssrcInfo.getPort());
-        Hook hook = Hook.getInstance(HookType.on_media_arrival, "rtp", stream, mediaServerItem.getId());
+        Hook hook = Hook.getInstance(HookType.on_media_arrival, MediaApp.GB28181, stream, mediaServerItem.getId());
         subscribe.addSubscribe(hook, (hookData) -> {
             if (event != null) {
                 event.response(hookData);

@@ -228,7 +228,7 @@ public class ByeRequestProcessor extends SIPRequestProcessorParent implements In
 						deviceChannelService.stopPlay(channel.getId());
 						inviteStreamService.removeInviteInfo(inviteInfo);
 						if (inviteInfo.getStreamInfo() != null) {
-							mediaServerService.closeRTPServer(inviteInfo.getStreamInfo().getMediaServer(), inviteInfo.getStreamInfo().getStream());
+							mediaServerService.closeRTPServer(inviteInfo.getStreamInfo().getMediaServer(), inviteInfo.getStreamInfo().getApp(), inviteInfo.getStreamInfo().getStream());
 						}
 					}
 					break;
