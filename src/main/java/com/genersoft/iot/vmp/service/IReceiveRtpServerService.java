@@ -10,6 +10,10 @@ import com.genersoft.iot.vmp.service.bean.SSRCInfo;
 
 public interface IReceiveRtpServerService {
 
+    SSRCInfo openGbRTPServer(MediaServer mediaServer, String streamId, String presetSSRC, int tcpMode,
+                             boolean playback, boolean ssrcCheck, boolean onlyAuto, boolean disableAuto,
+                             ErrorCallback<OpenRTPServerResult> callback);
+
     int openRTPServer(RTPServerParam rtpServerParam, ErrorCallback<HookData> callback);
 
     void closeRTPServer(MediaServer mediaServer, String app, String stream);

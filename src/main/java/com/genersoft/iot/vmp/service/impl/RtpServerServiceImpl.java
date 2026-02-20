@@ -1,13 +1,11 @@
 package com.genersoft.iot.vmp.service.impl;
 
-import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.common.enums.MediaApp;
 import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.gb28181.bean.OpenRTPServerResult;
 import com.genersoft.iot.vmp.gb28181.session.SSRCFactory;
 import com.genersoft.iot.vmp.gb28181.session.SipInviteSessionManager;
-import com.genersoft.iot.vmp.media.bean.MediaInfo;
 import com.genersoft.iot.vmp.media.bean.MediaServer;
 import com.genersoft.iot.vmp.media.event.hook.Hook;
 import com.genersoft.iot.vmp.media.event.hook.HookData;
@@ -28,7 +26,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -72,9 +69,10 @@ public class RtpServerServiceImpl implements IReceiveRtpServerService {
 
     }
 
+    @Override
     public SSRCInfo openGbRTPServer(MediaServer mediaServer, String streamId, String presetSSRC, int tcpMode,
-                               boolean playback, boolean ssrcCheck, boolean onlyAuto, boolean disableAuto, boolean reUsePort,
-                                    ErrorCallback<OpenRTPServerResult> callback ) {
+                                    boolean playback, boolean ssrcCheck, boolean onlyAuto, boolean disableAuto,
+                                    ErrorCallback<OpenRTPServerResult> callback) {
         if (callback == null) {
             log.warn("[开启国标RTP收流] 失败，回调为NULL");
             return null;
@@ -84,7 +82,7 @@ public class RtpServerServiceImpl implements IReceiveRtpServerService {
             return null;
         }
 
-        // 获取mediaServer可用的ssrc
+        // 获取 mediaServer 可用的 ssrc
         final String ssrc;
         if (presetSSRC != null) {
             ssrc = presetSSRC;
@@ -104,7 +102,7 @@ public class RtpServerServiceImpl implements IReceiveRtpServerService {
         }
 
         SSRCInfo ssrcInfo = new SSRCInfo(0, ssrc, MediaApp.GB28181, streamId);
-        RTPServerParam rtpServerParam = new RTPServerParam(mediaServer, MediaApp.GB28181, streamId, ssrcCheck ? Long.parseLong(ssrc): 0L, null, onlyAuto, disableAuto, reUsePort, tcpMode);
+        RTPServerParam rtpServerParam = new RTPServerParam(mediaServer, MediaApp.GB28181, streamId, ssrcCheck ? Long.parseLong(ssrc): 0L, null, onlyAuto, disableAuto, false, tcpMode);
         int rtpServerPort = openRTPServer(rtpServerParam, ((code, msg, data) -> {
             if (code == InviteErrorCode.SUCCESS.getCode()) {
                 OpenRTPServerResult openRTPServerResult = new OpenRTPServerResult();
