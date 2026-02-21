@@ -104,7 +104,7 @@ public class StreamProxyServiceImpl implements IStreamProxyService {
     @Async("taskExecutor")
     @EventListener
     public void onApplicationEvent(MediaNotFoundEvent event) {
-        if (MediaApp.GB28181.equals(event.getApp())) {
+        if (MediaApp.isKeywords(event.getApp())) {
             return;
         }
         // 拉流代理

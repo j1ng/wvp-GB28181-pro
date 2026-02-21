@@ -114,7 +114,9 @@ public class RtpServerServiceImpl implements IReceiveRtpServerService {
                 if (presetSSRC == null) {
                     ssrcFactory.releaseSsrc(mediaServer.getId(), ssrc);
                 }
-                callback.run(code, msg, null);
+                OpenRTPServerResult openRTPServerResult = new OpenRTPServerResult();
+                openRTPServerResult.setSsrcInfo(ssrcInfo);
+                callback.run(code, msg, openRTPServerResult);
             }
         }));
         ssrcInfo.setPort(rtpServerPort);
@@ -176,5 +178,14 @@ public class RtpServerServiceImpl implements IReceiveRtpServerService {
             dynamicTask.stop(timeOutTaskKey);
         }
         mediaServerService.closeRTPServer(mediaServer, app, stream);
+    }
+
+    @Override
+    public void closeRTPServerByMediaServerId(String mediaServerId, String app, String stream) {
+        MediaServer mediaServer = mediaServerService.getOne(mediaServerId);
+        if (mediaServer == null) {
+            return;
+        }
+        closeRTPServer(mediaServer, app, stream);
     }
 }

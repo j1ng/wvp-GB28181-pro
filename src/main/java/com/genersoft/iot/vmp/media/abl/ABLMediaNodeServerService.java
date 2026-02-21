@@ -247,7 +247,7 @@ public class ABLMediaNodeServerService implements IMediaNodeServerService {
 
         streamInfoResult.setMediaInfo(mediaInfo);
 
-        if (!"broadcast".equalsIgnoreCase(app) && !ObjectUtils.isEmpty(mediaServer.getTranscodeSuffix()) && !"null".equalsIgnoreCase(mediaServer.getTranscodeSuffix())) {
+        if (!MediaApp.GB28181_BROADCAST.equalsIgnoreCase(app) && !ObjectUtils.isEmpty(mediaServer.getTranscodeSuffix()) && !"null".equalsIgnoreCase(mediaServer.getTranscodeSuffix())) {
             String newStream = stream + "_" + mediaServer.getTranscodeSuffix();
             mediaServer.setTranscodeSuffix(null);
             StreamInfo transcodeStreamInfo = getStreamInfoByAppAndStream(mediaServer, app, newStream, null, addr, callId, isPlay);
@@ -444,7 +444,7 @@ public class ABLMediaNodeServerService implements IMediaNodeServerService {
 
     @Override
     public List<String> listRtpServer(MediaServer mediaServer) {
-        ABLResult ablResult = ablresTfulUtils.getMediaList(mediaServer, MediaApp.GB28181, null);
+        ABLResult ablResult = ablresTfulUtils.getMediaList(mediaServer, null, null);
         if (ablResult.getCode() != 0) {
             return null;
         }

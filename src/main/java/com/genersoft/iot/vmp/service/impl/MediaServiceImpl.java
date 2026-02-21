@@ -97,7 +97,7 @@ public class MediaServiceImpl implements IMediaService {
     public ResultForOnPublish authenticatePublish(MediaServer mediaServer, String app, String stream, String params) {
         // 推流鉴权的处理
         if (!MediaApp.GB28181.equals(app) && !MediaApp.JT1078.equals(app) ) {
-            if ("talk".equals(app) && stream.endsWith("_talk")) {
+            if (MediaApp.GB28181_TALK.equals(app) && stream.endsWith("_talk")) {
                 ResultForOnPublish result = new ResultForOnPublish();
                 result.setEnable_mp4(false);
                 result.setEnable_audio(true);
@@ -215,10 +215,10 @@ public class MediaServiceImpl implements IMediaService {
                     result.setEnable_audio(true);
                 }
             }
-        } else if (app.equals("broadcast")) {
+        } else if (app.equals(MediaApp.GB28181_BROADCAST)) {
             result.setEnable_audio(true);
             result.setEnable_mp4(userSetting.getRecordSip());
-        } else if (app.equals("talk")) {
+        } else if (app.equals(MediaApp.GB28181_TALK)) {
             result.setEnable_audio(true);
             result.setEnable_mp4(userSetting.getRecordSip());
         }else {
@@ -274,7 +274,7 @@ public class MediaServiceImpl implements IMediaService {
             }else {
                 return false;
             }
-        }else if ("talk".equals(app) || "broadcast".equals(app)) {
+        }else if (MediaApp.GB28181_TALK.equals(app) || MediaApp.GB28181_BROADCAST.equals(app)) {
             return false;
         } else if ("mp4_record".equals(app)) {
             return true;

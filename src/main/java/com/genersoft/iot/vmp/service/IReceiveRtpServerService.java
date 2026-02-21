@@ -17,4 +17,6 @@ public interface IReceiveRtpServerService {
     int openRTPServer(RTPServerParam rtpServerParam, ErrorCallback<HookData> callback);
 
     void closeRTPServer(MediaServer mediaServer, String app, String stream);
+
+    void closeRTPServerByMediaServerId(String mediaServerId, String app, String stream);
 }

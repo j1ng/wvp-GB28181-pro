@@ -34,20 +34,11 @@ public interface IMediaServerService {
 
     void updateVmServer(List<MediaServer>  mediaServerItemList);
 
-    SSRCInfo openRTPServer(MediaServer mediaServerItem, String app, String streamId, String presetSsrc, boolean ssrcCheck,
-                           boolean isPlayback, Integer port, Boolean onlyAuto, Boolean disableAudio, Boolean reUsePort, Integer tcpMode);
-
     void closeRTPServer(MediaServer mediaServerItem, String app, String streamId);
 
     void closeRTPServer(MediaServer mediaServerItem, String app, String streamId, CommonCallback<Boolean> callback);
 
-//    SSRCInfo openJTTServer(MediaServer mediaServerItem, String streamId, Integer port, Boolean disableVideo, Boolean disableAudio, Integer tcpMode);
-//
-//    void closeJTTServer(MediaServer mediaServerItem, String streamId, CommonCallback<Boolean> callback);
-
     Boolean updateRtpServerSSRC(MediaServer mediaServerItem, String app, String streamId, String ssrc);
-
-    void closeRTPServer(String mediaServerId, String app, String streamId);
 
     void clearRTPServer(MediaServer mediaServerItem);
 

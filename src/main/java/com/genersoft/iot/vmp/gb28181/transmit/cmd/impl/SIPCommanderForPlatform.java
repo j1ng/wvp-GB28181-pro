@@ -19,6 +19,7 @@ import com.genersoft.iot.vmp.media.event.hook.Hook;
 import com.genersoft.iot.vmp.media.event.hook.HookSubscribe;
 import com.genersoft.iot.vmp.media.event.hook.HookType;
 import com.genersoft.iot.vmp.media.service.IMediaServerService;
+import com.genersoft.iot.vmp.service.IReceiveRtpServerService;
 import com.genersoft.iot.vmp.service.bean.GPSMsgInfo;
 import com.genersoft.iot.vmp.service.bean.SSRCInfo;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
@@ -60,6 +61,9 @@ public class SIPCommanderForPlatform implements ISIPCommanderForPlatform {
 
     @Autowired
     private IMediaServerService mediaServerService;
+
+    @Autowired
+    private IReceiveRtpServerService receiveRtpServerService;
 
     @Autowired
     private SipLayer sipLayer;
@@ -642,7 +646,7 @@ public class SIPCommanderForPlatform implements ISIPCommanderForPlatform {
         MediaServer mediaServerItem = mediaServerService.getOne(mediaServerId);
         if (mediaServerItem != null) {
             mediaServerService.releaseSsrc(mediaServerItem.getId(), sendRtpItem.getSsrc());
-            mediaServerService.closeRTPServer(mediaServerItem, sendRtpItem.getApp(), sendRtpItem.getStream());
+            receiveRtpServerService.closeRTPServer(mediaServerItem, sendRtpItem.getApp(), sendRtpItem.getStream());
         }
         SIPRequest byeRequest = headerProviderPlatformProvider.createByeRequest(platform, sendRtpItem, channel);
         if (byeRequest == null) {
@@ -664,8 +668,6 @@ public class SIPCommanderForPlatform implements ISIPCommanderForPlatform {
             throw new SsrcTransactionNotFoundException(platform.getServerGBId(), channel.getGbDeviceId(), callId, stream);
         }
 
-        mediaServerService.releaseSsrc(ssrcTransaction.getMediaServerId(), ssrcTransaction.getSsrc());
-        mediaServerService.closeRTPServer(ssrcTransaction.getMediaServerId(), ssrcTransaction.getApp(), ssrcTransaction.getStream());
         sessionManager.removeByStream(ssrcTransaction.getApp(), ssrcTransaction.getStream());
 
         Request byteRequest = headerProviderPlatformProvider.createByteRequest(platform, channel.getGbDeviceId(), ssrcTransaction.getSipTransactionInfo());
@@ -697,7 +699,7 @@ public class SIPCommanderForPlatform implements ISIPCommanderForPlatform {
 
     @Override
     public void broadcastInviteCmd(Platform platform, CommonGBChannel channel,String sourceId, MediaServer mediaServerItem,
-                                   SSRCInfo ssrcInfo, HookSubscribe.Event event, SipSubscribe.Event okEvent,
+                                   SSRCInfo ssrcInfo, SipSubscribe.Event okEvent,
                                    SipSubscribe.Event errorEvent) throws ParseException, SipException, InvalidArgumentException {
         String stream = ssrcInfo.getStream();
 
@@ -706,13 +708,6 @@ public class SIPCommanderForPlatform implements ISIPCommanderForPlatform {
         }
 
         log.info("{} 分配的ZLM为: {} [{}:{}]", stream, mediaServerItem.getId(), mediaServerItem.getIp(), ssrcInfo.getPort());
-        Hook hook = Hook.getInstance(HookType.on_media_arrival, MediaApp.GB28181, stream, mediaServerItem.getId());
-        subscribe.addSubscribe(hook, (hookData) -> {
-            if (event != null) {
-                event.response(hookData);
-                subscribe.removeSubscribe(hook);
-            }
-        });
         String sdpIp = mediaServerItem.getSdpIp();
 
         StringBuffer content = new StringBuffer(200);
@@ -753,7 +748,6 @@ public class SIPCommanderForPlatform implements ISIPCommanderForPlatform {
         sipSender.transmitRequest(sipLayer.getLocalIp(platform.getDeviceIp()), request, (e -> {
             sessionManager.removeByStream(ssrcInfo.getApp(), ssrcInfo.getStream());
             mediaServerService.releaseSsrc(mediaServerItem.getId(), ssrcInfo.getSsrc());
-            subscribe.removeSubscribe(hook);
             errorEvent.response(e);
         }), e -> {
             ResponseEvent responseEvent = (ResponseEvent) e.event;

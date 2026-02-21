@@ -133,7 +133,7 @@ public class PlayServiceImpl implements IPlayService {
     @Async("taskExecutor")
     @EventListener
     public void onApplicationEvent(MediaArrivalEvent event) {
-        if ("broadcast".equals(event.getApp()) || "talk".equals(event.getApp())) {
+        if (MediaApp.GB28181_BROADCAST.equals(event.getApp()) || MediaApp.GB28181_TALK.equals(event.getApp())) {
             if (event.getStream().indexOf("_") > 0) {
                 String[] streamArray = event.getStream().split("_");
                 if (streamArray.length == 2) {
@@ -149,7 +149,7 @@ public class PlayServiceImpl implements IPlayService {
                         log.info("[语音对讲/喊话] 未找到通道：{}", channelId);
                         return;
                     }
-                    if ("broadcast".equals(event.getApp())) {
+                    if (MediaApp.GB28181_BROADCAST.equals(event.getApp())) {
                         if (audioBroadcastManager.exit(channel.getId())) {
                             stopAudioBroadcast(device, channel);
                         }
@@ -160,7 +160,7 @@ public class PlayServiceImpl implements IPlayService {
                         } catch (InvalidArgumentException | ParseException | SipException e) {
                             log.error("[命令发送失败] 语音对讲: {}", e.getMessage());
                         }
-                    }else if ("talk".equals(event.getApp())) {
+                    }else if (MediaApp.GB28181_TALK.equals(event.getApp())) {
                         // 开启语音对讲通道
                         talkCmd(device, channel, event.getMediaServer(), event.getStream(), (msg) -> log.info("[语音对讲] 通道建立成功, device: {}, channel: {}", deviceId, channelId));
                     }
@@ -205,7 +205,7 @@ public class PlayServiceImpl implements IPlayService {
             }
         }
 
-        if ("broadcast".equals(event.getApp()) || "talk".equals(event.getApp())) {
+        if (MediaApp.GB28181_BROADCAST.equals(event.getApp()) || MediaApp.GB28181_TALK.equals(event.getApp())) {
             if (event.getStream().indexOf("_") > 0) {
                 String[] streamArray = event.getStream().split("_");
                 if (streamArray.length == 2) {
@@ -221,9 +221,9 @@ public class PlayServiceImpl implements IPlayService {
                         log.info("[语音对讲/喊话] 未找到通道：{}", channelId);
                         return;
                     }
-                    if ("broadcast".equals(event.getApp())) {
+                    if (MediaApp.GB28181_BROADCAST.equals(event.getApp())) {
                         stopAudioBroadcast(device, channel);
-                    }else if ("talk".equals(event.getApp())) {
+                    }else if (MediaApp.GB28181_TALK.equals(event.getApp())) {
                         stopTalk(device, channel, false);
                     }
                 }
@@ -483,8 +483,7 @@ public class PlayServiceImpl implements IPlayService {
 
 
     private void talk(MediaServer mediaServerItem, Device device, DeviceChannel channel, String stream,
-                      HookSubscribe.Event hookEvent, SipSubscribe.Event errorEvent,
-                      Runnable timeoutCallback, AudioBroadcastEvent audioEvent) {
+                      SipSubscribe.Event errorEvent, Runnable timeoutCallback, AudioBroadcastEvent audioEvent) {
 
         String playSsrc = ssrcFactory.getPlaySsrc(mediaServerItem.getId());
 
@@ -494,7 +493,7 @@ public class PlayServiceImpl implements IPlayService {
         }
         SendRtpInfo sendRtpInfo;
         try {
-            sendRtpInfo = sendRtpServerService.createSendRtpInfo(mediaServerItem, null, null, playSsrc, device.getDeviceId(), "talk", stream,
+            sendRtpInfo = sendRtpServerService.createSendRtpInfo(mediaServerItem, null, null, playSsrc, device.getDeviceId(), MediaApp.GB28181_TALK, stream,
                     channel.getId(), true, false);
             sendRtpInfo.setPlayType(InviteStreamType.TALK);
         }catch (PlayException e) {
@@ -583,7 +582,7 @@ public class PlayServiceImpl implements IPlayService {
 
             }, (event) -> {
                 dynamicTask.stop(timeOutTaskKey);
-                mediaServerService.closeRTPServer(mediaServerItem, sendRtpInfo.getApp(), sendRtpInfo.getStream());
+                receiveRtpServerService.closeRTPServer(mediaServerItem, sendRtpInfo.getApp(), sendRtpInfo.getStream());
                 // 释放ssrc
                 mediaServerService.releaseSsrc(mediaServerItem.getId(), sendRtpInfo.getSsrc());
                 sessionManager.removeByStream(sendRtpInfo.getApp(), sendRtpInfo.getStream());
@@ -593,7 +592,7 @@ public class PlayServiceImpl implements IPlayService {
 
             log.error("[命令发送失败] 对讲消息: {}", e.getMessage());
             dynamicTask.stop(timeOutTaskKey);
-            mediaServerService.closeRTPServer(mediaServerItem, sendRtpInfo.getApp(), sendRtpInfo.getStream());
+            receiveRtpServerService.closeRTPServer(mediaServerItem, sendRtpInfo.getApp(), sendRtpInfo.getStream());
             // 释放ssrc
             mediaServerService.releaseSsrc(mediaServerItem.getId(), sendRtpInfo.getSsrc());
 
@@ -1228,7 +1227,7 @@ public class PlayServiceImpl implements IPlayService {
         if (broadcastMode == null) {
             broadcastMode = true;
         }
-        String app = broadcastMode?"broadcast":"talk";
+        String app = broadcastMode ? MediaApp.GB28181_BROADCAST : MediaApp.GB28181_TALK;
         String stream = device.getDeviceId() + "_" + deviceChannel.getDeviceId();
         AudioBroadcastResult audioBroadcastResult = new AudioBroadcastResult();
         audioBroadcastResult.setApp(app);
@@ -1530,7 +1529,7 @@ public class PlayServiceImpl implements IPlayService {
         SendRtpInfo sendRtpInfo = sendRtpServerService.queryByChannelId(channel.getId(), device.getDeviceId());
         if (sendRtpInfo != null) {
             MediaServer mediaServer = mediaServerService.getOne(sendRtpInfo.getMediaServerId());
-            Boolean streamReady = mediaServerService.isStreamReady(mediaServer, MediaApp.GB28181, sendRtpInfo.getReceiveStream());
+            Boolean streamReady = mediaServerService.isStreamReady(mediaServer, MediaApp.GB28181_TALK, sendRtpInfo.getReceiveStream());
             if (streamReady) {
                 log.warn("[语音对讲] 进行中： {}", channel.getDeviceId());
                 event.call("语音对讲进行中");
@@ -1540,9 +1539,7 @@ public class PlayServiceImpl implements IPlayService {
             }
         }
 
-        talk(mediaServerItem, device, channel, stream, (hookData) -> {
-            log.info("[语音对讲] 收到设备发来的流");
-        }, eventResult -> {
+        talk(mediaServerItem, device, channel, stream, eventResult -> {
             log.warn("[语音对讲] 失败，{}/{}, 错误码 {} {}", device.getDeviceId(), channel.getDeviceId(), eventResult.statusCode, eventResult.msg);
             event.call("失败，错误码 " + eventResult.statusCode + ", " + eventResult.msg);
         }, () -> {
