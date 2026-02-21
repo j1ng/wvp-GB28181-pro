@@ -509,21 +509,25 @@ public class ZLMRESTfulUtils {
     }
 
     public ZLMResult<?> startSendRtpPassive(MediaServer mediaServer, Map<String, Object> param, ResultCallback callback) {
-        String response = sendPost(mediaServer, "startSendRtpPassive",param, (responseStr -> {
-            if (callback == null) {
-                return;
-            }
-            if (responseStr == null) {
-                callback.run(ZLMResult.getFailForMediaServer());
-            }else {
-                ZLMResult<?> zlmResult = JSON.parseObject(responseStr, ZLMResult.class);
-                if (zlmResult == null) {
+        RequestCallback requestCallback = null;
+        if (callback != null) {
+            requestCallback = (responseStr -> {
+                if (callback == null) {
+                    return;
+                }
+                if (responseStr == null) {
                     callback.run(ZLMResult.getFailForMediaServer());
                 }else {
-                    callback.run(zlmResult);
+                    ZLMResult<?> zlmResult = JSON.parseObject(responseStr, ZLMResult.class);
+                    if (zlmResult == null) {
+                        callback.run(ZLMResult.getFailForMediaServer());
+                    }else {
+                        callback.run(zlmResult);
+                    }
                 }
-            }
-        }));
+            });
+        }
+        String response = sendPost(mediaServer, "startSendRtpPassive",param, requestCallback);
         if (response == null) {
             return ZLMResult.getFailForMediaServer();
         }else {
