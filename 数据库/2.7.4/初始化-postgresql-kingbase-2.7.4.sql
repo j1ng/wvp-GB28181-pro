@@ -350,7 +350,7 @@ create table IF NOT EXISTS wvp_media_server
     record_path         character varying(255),
     record_day          integer               default 7,
     transcode_suffix    character varying(255),
-    server_id           character varying(50),
+    server_id           character varying(50)
 );
 COMMENT ON TABLE wvp_media_server IS '媒体服务器（如 ZLM）节点信息';
 COMMENT ON COLUMN wvp_media_server.id IS '媒体服务器ID';
@@ -931,7 +931,7 @@ create table IF NOT EXISTS wvp_alarm (
         latitude double precision,
         alarm_type integer,
         alarm_time bigint
-)
+);
 COMMENT ON COLUMN wvp_alarm.id IS '主键ID';
 COMMENT ON COLUMN wvp_alarm.channel_id IS '关联通道的数据库id';
 COMMENT ON COLUMN wvp_alarm.description IS '报警描述';
